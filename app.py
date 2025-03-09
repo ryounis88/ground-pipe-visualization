@@ -27,7 +27,7 @@ def main():
 
 def create_visualization(water_table_depth, pipe_top_depth, pipe_middle_depth, 
                          pipe_bottom_depth, pipe_diameter, water_pipe_gap):
-    # Create figure and axis
+    # Create figure and axis with a fixed aspect ratio to ensure circles appear circular
     fig, ax = plt.subplots(figsize=(10, 8))
     
     # Ground surface parameters
@@ -56,9 +56,39 @@ def create_visualization(water_table_depth, pipe_top_depth, pipe_middle_depth,
     ax.text(triangle_x, water_table_depth - triangle_size - 0.2, 'Water Table',
             ha='center', va='top', color='royalblue', fontweight='bold')
     
-    # Draw pipe (circular)
+    # Position the pipe
     pipe_x = ground_width / 2
-    circle = plt.Circle((pipe_x, pipe_middle_depth), pipe_diameter/2, facecolor='silver', 
+    pipe_radius = pipe_diameter / 2
+    
+    # Draw horizontal dimension lines (behind the pipe)
+    line_start_x = 0
+    line_end_x = pipe_x - pipe_radius - 0.1  # Stop before reaching the pipe
+    line_style = {'color': 'darkgray', 'linestyle': '--', 'linewidth': 1}
+    
+    # Top of pipe horizontal line
+    ax.plot([line_start_x, line_end_x], [pipe_top_depth, pipe_top_depth], **line_style)
+    
+    # Middle of pipe horizontal line
+    ax.plot([line_start_x, line_end_x], [pipe_middle_depth, pipe_middle_depth], **line_style)
+    
+    # Bottom of pipe horizontal line
+    ax.plot([line_start_x, line_end_x], [pipe_bottom_depth, pipe_bottom_depth], **line_style)
+    
+    # Right side horizontal lines
+    line_start_x = pipe_x + pipe_radius + 0.1  # Start after the pipe
+    line_end_x = ground_width
+    
+    # Top of pipe horizontal line (right side)
+    ax.plot([line_start_x, line_end_x], [pipe_top_depth, pipe_top_depth], **line_style)
+    
+    # Middle of pipe horizontal line (right side)
+    ax.plot([line_start_x, line_end_x], [pipe_middle_depth, pipe_middle_depth], **line_style)
+    
+    # Bottom of pipe horizontal line (right side)
+    ax.plot([line_start_x, line_end_x], [pipe_bottom_depth, pipe_bottom_depth], **line_style)
+    
+    # Draw pipe (circular) - AFTER drawing dimension lines to ensure it's on top
+    circle = plt.Circle((pipe_x, pipe_middle_depth), pipe_radius, facecolor='silver', 
                         edgecolor='black', alpha=0.8, zorder=5)
     ax.add_patch(circle)
     
@@ -111,7 +141,10 @@ def create_visualization(water_table_depth, pipe_top_depth, pipe_middle_depth,
     ax.set_xlabel('Distance (m)')
     ax.set_ylabel('Depth (m)')
     ax.set_title('Ground Surface with Underground Pipe and Water Table')
-    ax.grid(True, linestyle='--', alpha=0.7)
+    ax.grid(False)  # Remove background grid to avoid confusion with dimension lines
+    
+    # Set aspect ratio to ensure the circle appears as a true circle
+    ax.set_aspect('equal')
     
     # Add legend
     from matplotlib.patches import Patch
@@ -119,7 +152,8 @@ def create_visualization(water_table_depth, pipe_top_depth, pipe_middle_depth,
     legend_elements = [
         Line2D([0], [0], color='k', lw=2, label='Ground Surface'),
         Line2D([0], [0], color='royalblue', lw=2, label='Water Table'),
-        Patch(facecolor='silver', edgecolor='black', label='Pipe', alpha=0.8)
+        Line2D([0], [0], color='darkgray', linestyle='--', label='Dimension Lines'),
+        Patch(facecolor='silver', edgecolor='black', label='Pipe')
     ]
     ax.legend(handles=legend_elements, loc='upper right')
     
