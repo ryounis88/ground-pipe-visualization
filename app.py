@@ -1,6 +1,7 @@
 import streamlit as st
 import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.patches as patches
 
 def main():
     st.title("Underground Pipe and Water Table Visualization")
@@ -43,50 +44,64 @@ def create_visualization(water_table_depth, pipe_top_depth, pipe_middle_depth,
     ax.axhline(y=water_table_depth, color='royalblue', linestyle='-', linewidth=2)
     ax.fill_between(ground_x, water_table_depth, max_depth, color='royalblue', alpha=0.3)
     
-    # Draw pipe
+    # Add blue triangle marker for water table top
+    triangle_size = 0.4
+    triangle_x = ground_width * 0.8  # Position triangle at 80% of width
+    water_triangle = plt.Polygon(
+        [[triangle_x, water_table_depth - triangle_size/2], 
+         [triangle_x - triangle_size/2, water_table_depth - triangle_size], 
+         [triangle_x + triangle_size/2, water_table_depth - triangle_size]],
+        closed=True, color='royalblue')
+    ax.add_patch(water_triangle)
+    ax.text(triangle_x, water_table_depth - triangle_size - 0.2, 'Water Table',
+            ha='center', va='top', color='royalblue', fontweight='bold')
+    
+    # Draw pipe (circular)
     pipe_x = ground_width / 2
-    pipe_width = ground_width / 4
-    pipe_left = pipe_x - pipe_width/2
-    pipe_right = pipe_x + pipe_width/2
+    circle = plt.Circle((pipe_x, pipe_middle_depth), pipe_diameter/2, facecolor='silver', 
+                        edgecolor='black', alpha=0.8, zorder=5)
+    ax.add_patch(circle)
     
-    # Draw pipe
-    pipe_rect = plt.Rectangle((pipe_left, pipe_top_depth), pipe_width, pipe_diameter, 
-                             facecolor='gray', edgecolor='black', alpha=0.8)
-    ax.add_patch(pipe_rect)
-    
-    # Add depth arrows
+    # Add depth arrows (positioned to avoid overlap)
     arrow_props = dict(arrowstyle='<->', color='black', linewidth=1.5)
     
+    # Position the arrows at different x-coordinates
+    water_arrow_x = 1.5
+    pipe_top_arrow_x = 3.0
+    pipe_middle_arrow_x = 4.5
+    pipe_bottom_arrow_x = 6.0
+    gap_arrow_x = 8.0
+    
     # Water table depth arrow
-    ax.annotate('', xy=(0.5, 0), xytext=(0.5, water_table_depth),
+    ax.annotate('', xy=(water_arrow_x, 0), xytext=(water_arrow_x, water_table_depth),
                 arrowprops=arrow_props)
-    ax.text(0.6, water_table_depth/2, f'Water Table Depth\n{water_table_depth:.1f} m', 
+    ax.text(water_arrow_x + 0.2, water_table_depth/2, f'Water Table Depth\n{water_table_depth:.1f} m', 
            ha='left', va='center', bbox=dict(facecolor='white', alpha=0.7))
     
     # Pipe top depth arrow
-    ax.annotate('', xy=(pipe_left - 0.5, 0), xytext=(pipe_left - 0.5, pipe_top_depth),
+    ax.annotate('', xy=(pipe_top_arrow_x, 0), xytext=(pipe_top_arrow_x, pipe_top_depth),
                 arrowprops=arrow_props)
-    ax.text(pipe_left - 0.6, pipe_top_depth/2, f'Pipe Top Depth\n{pipe_top_depth:.1f} m', 
-           ha='right', va='center', bbox=dict(facecolor='white', alpha=0.7))
+    ax.text(pipe_top_arrow_x + 0.2, pipe_top_depth/2, f'Pipe Top Depth\n{pipe_top_depth:.1f} m', 
+           ha='left', va='center', bbox=dict(facecolor='white', alpha=0.7))
     
     # Pipe middle depth arrow
-    ax.annotate('', xy=(pipe_left - 0.5, 0), xytext=(pipe_left - 0.5, pipe_middle_depth),
+    ax.annotate('', xy=(pipe_middle_arrow_x, 0), xytext=(pipe_middle_arrow_x, pipe_middle_depth),
                 arrowprops=arrow_props)
-    ax.text(pipe_left - 0.6, pipe_middle_depth, f'Pipe Middle\n{pipe_middle_depth:.1f} m', 
-           ha='right', va='center', bbox=dict(facecolor='white', alpha=0.7))
+    ax.text(pipe_middle_arrow_x + 0.2, pipe_middle_depth/2, f'Pipe Middle\n{pipe_middle_depth:.1f} m', 
+           ha='left', va='center', bbox=dict(facecolor='white', alpha=0.7))
     
     # Pipe bottom depth arrow
-    ax.annotate('', xy=(pipe_left - 0.5, 0), xytext=(pipe_left - 0.5, pipe_bottom_depth),
+    ax.annotate('', xy=(pipe_bottom_arrow_x, 0), xytext=(pipe_bottom_arrow_x, pipe_bottom_depth),
                 arrowprops=arrow_props)
-    ax.text(pipe_left - 0.6, pipe_bottom_depth, f'Pipe Bottom\n{pipe_bottom_depth:.1f} m', 
-           ha='right', va='center', bbox=dict(facecolor='white', alpha=0.7))
+    ax.text(pipe_bottom_arrow_x + 0.2, pipe_bottom_depth/2, f'Pipe Bottom\n{pipe_bottom_depth:.1f} m', 
+           ha='left', va='center', bbox=dict(facecolor='white', alpha=0.7))
     
     # Gap between water table and pipe (if pipe is above water table)
     if water_pipe_gap > 0:
-        ax.annotate('', xy=(pipe_right + 0.5, pipe_top_depth), 
-                   xytext=(pipe_right + 0.5, water_table_depth),
+        ax.annotate('', xy=(gap_arrow_x, pipe_top_depth), 
+                   xytext=(gap_arrow_x, water_table_depth),
                    arrowprops=arrow_props)
-        ax.text(pipe_right + 0.6, pipe_top_depth + water_pipe_gap/2, 
+        ax.text(gap_arrow_x + 0.2, pipe_top_depth + water_pipe_gap/2, 
                f'Gap\n{water_pipe_gap:.1f} m', 
                ha='left', va='center', bbox=dict(facecolor='white', alpha=0.7))
     
@@ -104,7 +119,7 @@ def create_visualization(water_table_depth, pipe_top_depth, pipe_middle_depth,
     legend_elements = [
         Line2D([0], [0], color='k', lw=2, label='Ground Surface'),
         Line2D([0], [0], color='royalblue', lw=2, label='Water Table'),
-        Patch(facecolor='gray', edgecolor='black', label='Pipe', alpha=0.8)
+        Patch(facecolor='silver', edgecolor='black', label='Pipe', alpha=0.8)
     ]
     ax.legend(handles=legend_elements, loc='upper right')
     
